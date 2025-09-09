@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Gerador PIX (QR + Copia e Cola)</title>
-<!-- CDN do gerador de QR (qrcode) -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <style>
   :root{
@@ -14,108 +13,66 @@
     --muted:#94a3b8;
     --text:#e6eef6;
   }
-  html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
-  body{background:linear-gradient(180deg,#071026 0%, #0b1220 100%);color:var(--text);display:flex;align-items:flex-start;justify-content:center;paddin:16px;}
-  .container{width:100%;max-width:480px;padding:18px;box-sizing:border-box;}
-  header{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  body{margin:0;font-family:system-ui,Roboto;background:linear-gradient(180deg,#071026 0%, #0b1220 100%);color:var(--text);}
+  .container{max-width:480px;margin:auto;padding:16px;}
   header h1{font-size:18px;margin:0;}
-  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:14px;box-shadow:0 6px 18px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03);}
-  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
-  input[type="number"]{
-    width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);
-    background:transparent;color:var(--text);font-size:16px;box-sizing:border-box;
-  }
-  .row{display:flex;gap:8px;margin-top:10px;}
-  .btn{
-    flex:1;padding:11px;border-radius:10px;border:0;background:var(--accent);
-    color:#042024;font-weight:600;font-size:15px;
-  }
-  .small{font-size:13px;color:var(--muted);margin-top:8px;}
-  .meta{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
-  .meta .info{font-size:14px;color:var(--text);}
-  .qr-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:14px;}
+  .card{background:rgba(255,255,255,0.02);border-radius:14px;padding:14px;box-shadow:0 6px 18px rgba(2,6,23,0.6);margin-top:12px;}
+  label{font-size:13px;color:var(--muted);margin-top:10px;display:block;}
+  input{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:var(--text);font-size:15px;box-sizing:border-box;}
+  .btn{width:100%;margin-top:14px;padding:12px;border-radius:10px;border:0;background:var(--accent);color:#042024;font-weight:600;font-size:15px;}
+  .qr-wrap{margin-top:14px;text-align:center;}
   canvas{background:white;padding:8px;border-radius:8px;}
-  .code-box{
-    width:100%;background:rgba(255,255,255,0.02);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);
-    word-break:break-all;color:var(--text);font-family:monospace;font-size:13px;line-height:1.3;
-  }
+  .code-box{margin-top:12px;background:rgba(255,255,255,0.03);padding:10px;border-radius:10px;font-family:monospace;font-size:13px;word-break:break-all;}
   .actions{display:flex;gap:8px;margin-top:8px;}
-  .action-btn{flex:1;padding:10px;border-radius:8px;border:0;background:rgba(255,255,255,0.04);color:var(--text);font-weight:600;}
-  footer{margin-top:14px;font-size:12px;color:var(--muted);text-align:center;}
-  @media (min-width:520px){
-    body{align-items:center;}
-  }
+  .action-btn{flex:1;padding:10px;border-radius:8px;border:0;background:rgba(255,255,255,0.08);color:var(--text);}
 </style>
 </head>
 <body>
 <div class="container">
   <header>
-    <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(90deg,var(--accent),#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:700;color:#042024">PIX</div>
-    <div>
-      <h1>Gerador PIX — QR & Copia e Cola</h1>
-      <div style="font-size:12px;color:var(--muted)">Chave: <strong>meuemail@dominio.com</strong> · Banco: <strong>Banco de Tal</strong></div>
+    <h1>Gerador PIX — QR & Copia e Cola</h1>
+    <div style="font-size:12px;color:var(--muted)">
+      Chave: <strong>meuemail@dominio.com</strong> · Banco: <strong>Banco de Tal</strong> · Titular: <strong>Fulano de Tal</strong>
     </div>
   </header>
 
   <div class="card">
     <label for="amount">Valor (R$)</label>
-    <input id="amount" type="number" min="0" step="0.01" placeholder="Ex.: 12.50" inputmode="decimal" />
+    <input id="amount" type="number" step="0.01" placeholder="Ex.: 50.00">
 
-    <div class="row">
-      <button id="generate" class="btn">Gerar QR e Copia & Cola</button>
-    </div>
+    <label for="desc">Descrição (opcional)</label>
+    <input id="desc" type="text" maxlength="25" placeholder="Ex.: Doação, Produto X">
 
-    <div class="small">Titular: <strong>Fulano de Tal</strong></div>
+    <label for="txid">TXID (opcional)</label>
+    <input id="txid" type="text" maxlength="25" placeholder="Ex.: PEDIDO123">
+
+    <button id="generate" class="btn">Gerar QR e Copia & Cola</button>
 
     <div id="result" style="display:none;">
       <div class="qr-wrap">
-        <canvas id="qrcanvas" width="260" height="260"></canvas>
-        <div style="font-size:13px;color:var(--muted)">Aponte a câmera do app bancário ou use o código abaixo.</div>
+        <canvas id="qrcanvas"></canvas>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px;">Aponte a câmera do app bancário ou copie o código abaixo.</div>
       </div>
-
-      <div style="margin-top:12px;">
-        <label>Código PIX (copia e cola)</label>
-        <div id="pixcode" class="code-box"></div>
-
-        <div class="actions">
-          <button id="copyCode" class="action-btn">Copiar código</button>
-          <button id="downloadQR" class="action-btn">Baixar QR</button>
-        </div>
-      </div>
-
-      <div style="margin-top:10px;font-size:12px;color:var(--muted)">
-        Observação: o payload segue o padrão EMV (PIX). O campo "Banco de Tal" é apenas informativo na interface.
+      <div class="code-box" id="pixcode"></div>
+      <div class="actions">
+        <button id="copyCode" class="action-btn">Copiar código</button>
+        <button id="downloadQR" class="action-btn">Baixar QR</button>
       </div>
     </div>
   </div>
-
-  <footer>Desenvolvido para celular — chave fixa: <strong>meuemail@dominio.com</strong></footer>
 </div>
 
 <script>
-/*
-  Implementação PIX EMV builder + CRC16 + QR generation.
-  Valores fixos conforme pedido:
-    chave: meuemail@dominio.com
-    titular: Fulano de Tal
-    banco (só para UI): Banco de Tal
-  Cidade definida como "SAO PAULO" (apenas para o campo 60).
-*/
-
-// Valores fixos (conforme solicitado)
 const PIX_KEY = "meuemail@dominio.com";
 const MERCHANT_NAME = "Fulano de Tal";
-const MERCHANT_CITY = "SAO PAULO"; // usado no tag 60
-const BANK_NAME = "Banco de Tal"; // apenas exibido na UI
-
-// monta tag EMV: id (2 chars) + length (2 digits) + value
+const MERCHANT_CITY = "FORTALEZA"; // alterado
+// função de montagem das tags
 function buildTag(id, value){
   const v = String(value);
   const len = String(v.length).padStart(2,'0');
   return id + len + v;
 }
-
-// CRC16-CCITT (polynomial 0x1021) implementation (initial 0xFFFF) commonly used para PIX
+// CRC16 (PIX)
 function crc16(payload){
   let crc = 0xFFFF;
   for(let i=0;i<payload.length;i++){
@@ -127,42 +84,32 @@ function crc16(payload){
   }
   return crc.toString(16).toUpperCase().padStart(4,'0');
 }
-
-// Monta o payload EMV completo (sem o CRC final) e retorna o codigo completo com CRC
-function buildPixPayload(amount){
-  // Tags principais
-  const payloadFormatIndicator = buildTag("00","01");
-  // Merchant Account Information (26) sub-tags:
-  // 00 = GUI br.gov.bcb.pix
-  // 01 = chave
-  // optionally 02 description etc.
-  const mai = buildTag("00","br.gov.bcb.pix") + buildTag("01", PIX_KEY);
+// Payload builder
+function buildPixPayload(amount, desc, txid){
+  const gui = buildTag("00","br.gov.bcb.pix");
+  const key = buildTag("01", PIX_KEY);
+  const descTag = desc ? buildTag("02", desc) : "";
+  const mai = gui + key + descTag;
   const maiTag = buildTag("26", mai);
 
-  const merchantCategoryCode = buildTag("52","0000");
-  const transactionCurrency = buildTag("53","986"); // BRL
+  const mcc = buildTag("52","0000");
+  const currency = buildTag("53","986");
   const amountTag = amount ? buildTag("54", Number(amount).toFixed(2)) : "";
-  const countryCode = buildTag("58","BR");
-  // merchant name (59) up to 25 chars
-  const mName = MERCHANT_NAME.length > 25 ? MERCHANT_NAME.slice(0,25) : MERCHANT_NAME;
-  const merchantNameTag = buildTag("59", mName);
-  const mCity = MERCHANT_CITY.length > 15 ? MERCHANT_CITY.slice(0,15) : MERCHANT_CITY;
-  const merchantCityTag = buildTag("60", mCity);
+  const country = buildTag("58","BR");
+  const name = buildTag("59", MERCHANT_NAME.slice(0,25));
+  const city = buildTag("60", MERCHANT_CITY.slice(0,15));
+  const addData = buildTag("05", txid || "*");
+  const addTag = buildTag("62", addData);
 
-  // Additional data field template (62) subtag 05: txid (pode ser "*", vazio, ou id). Usaremos "*" para permitir usa-lo como pagamento sem txid fixo.
-  const additional = buildTag("05", "*");
-  const additionalTag = buildTag("62", additional);
-
-  // Monta tudo e acrescenta tag CRC placeholder (63) com length 04 (sem o valor do CRC ainda)
-  const withoutCrc = payloadFormatIndicator + maiTag + merchantCategoryCode + transactionCurrency + amountTag + countryCode + merchantNameTag + merchantCityTag + additionalTag + "6304";
-  const crc = crc16(withoutCrc);
-  const full = withoutCrc + crc;
-  return full;
+  const base = buildTag("00","01") + maiTag + mcc + currency + amountTag + country + name + city + addTag + "6304";
+  return base + crc16(base);
 }
 
-// UI handlers
+// elementos
 const btn = document.getElementById("generate");
-const amountInput = document.getElementById("amount");
+const amountEl = document.getElementById("amount");
+const descEl = document.getElementById("desc");
+const txidEl = document.getElementById("txid");
 const resultBox = document.getElementById("result");
 const pixCodeDiv = document.getElementById("pixcode");
 const copyBtn = document.getElementById("copyCode");
@@ -170,50 +117,25 @@ const downloadBtn = document.getElementById("downloadQR");
 const canvas = document.getElementById("qrcanvas");
 
 btn.addEventListener("click", async ()=>{
-  const amtRaw = amountInput.value;
-  // aceita vazio (QR sem valor) ou valor positivo
-  if(amtRaw !== "" && Number(amtRaw) <= 0){
-    alert("Informe um valor maior que zero ou deixe vazio para sem valor.");
-    return;
-  }
-  const amount = amtRaw === "" ? null : Number(amtRaw).toFixed(2);
-  const payload = buildPixPayload(amount);
+  const amount = amountEl.value ? Number(amountEl.value).toFixed(2) : null;
+  const desc = descEl.value.trim() || null;
+  const txid = txidEl.value.trim() || null;
+  const payload = buildPixPayload(amount, desc, txid);
+
   pixCodeDiv.textContent = payload;
   resultBox.style.display = "block";
 
-  // Gera QR no canvas (qrcode lib)
-  try {
-    // tamanho dependendo do dispositivo: vamos adaptar o canvas
-    const size = Math.min(window.innerWidth - 60, 520);
-    canvas.width = size;
-    canvas.height = size;
-    await QRCode.toCanvas(canvas, payload, {
-      width: size,
-      margin: 1
-    });
-  } catch (e){
-    console.error(e);
-    alert("Erro gerando QR: " + e);
-  }
+  await QRCode.toCanvas(canvas, payload, {width:260, margin:1});
 });
-
-// copiar código
 copyBtn.addEventListener("click", async ()=>{
-  const text = pixCodeDiv.textContent;
-  try {
-    await navigator.clipboard.writeText(text);
-    copyBtn.textContent = "Copiado!";
-    setTimeout(()=> copyBtn.textContent = "Copiar código", 1200);
-  } catch (e){
-    alert("Não foi possível copiar automaticamente. Selecione e copie manualmente.");
-  }
+  await navigator.clipboard.writeText(pixCodeDiv.textContent);
+  copyBtn.textContent = "Copiado!";
+  setTimeout(()=> copyBtn.textContent="Copiar código",1200);
 });
-
-// baixar QR
 downloadBtn.addEventListener("click", ()=>{
   const link = document.createElement("a");
-  link.download = "pix_qr.png";
-  link.href = canvas.toDataURL("image/png");
+  link.download="pix_qr.png";
+  link.href=canvas.toDataURL("image/png");
   link.click();
 });
 </script>
