@@ -1,212 +1,221 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gerador PIX — QR & Copia e Cola</title>
-  <style>
-    body{font-family: system-ui,Segoe UI,Roboto,Arial;max-width:900px;margin:24px auto;padding:16px}
-    h1{font-size:1.6rem}
-    label{display:block;margin-top:12px;font-weight:600}
-    input,select,textarea{width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:6px}
-    .row{display:flex;gap:12px}
-    .col{flex:1}
-    #qr{padding:12px;border:1px dashed #ddd;display:inline-block;margin-top:12px}
-    button{margin-top:12px;padding:8px 12px;border-radius:8px;border:0;background:#0069ff;color:white}
-    small.note{color:#666;display:block;margin-top:6px}
-    footer{margin-top:20px;color:#666;font-size:0.9rem}
-    .flex{display:flex;gap:12px;align-items:center}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Gerador PIX (QR + Copia e Cola)</title>
+<!-- CDN do gerador de QR (qrcode) -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<style>
+  :root{
+    --bg:#0f172a;
+    --card:#0b1220;
+    --accent:#06b6d4;
+    --muted:#94a3b8;
+    --text:#e6eef6;
+  }
+  html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+  body{background:linear-gradient(180deg,#071026 0%, #0b1220 100%);color:var(--text);display:flex;align-items:flex-start;justify-content:center;paddin:16px;}
+  .container{width:100%;max-width:480px;padding:18px;box-sizing:border-box;}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  header h1{font-size:18px;margin:0;}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:14px;box-shadow:0 6px 18px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03);}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
+  input[type="number"]{
+    width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);
+    background:transparent;color:var(--text);font-size:16px;box-sizing:border-box;
+  }
+  .row{display:flex;gap:8px;margin-top:10px;}
+  .btn{
+    flex:1;padding:11px;border-radius:10px;border:0;background:var(--accent);
+    color:#042024;font-weight:600;font-size:15px;
+  }
+  .small{font-size:13px;color:var(--muted);margin-top:8px;}
+  .meta{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+  .meta .info{font-size:14px;color:var(--text);}
+  .qr-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:14px;}
+  canvas{background:white;padding:8px;border-radius:8px;}
+  .code-box{
+    width:100%;background:rgba(255,255,255,0.02);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);
+    word-break:break-all;color:var(--text);font-family:monospace;font-size:13px;line-height:1.3;
+  }
+  .actions{display:flex;gap:8px;margin-top:8px;}
+  .action-btn{flex:1;padding:10px;border-radius:8px;border:0;background:rgba(255,255,255,0.04);color:var(--text);font-weight:600;}
+  footer{margin-top:14px;font-size:12px;color:var(--muted);text-align:center;}
+  @media (min-width:520px){
+    body{align-items:center;}
+  }
+</style>
 </head>
 <body>
-  <h1>Gerador PIX — QR Code e "Copia e Cola"</h1>
-  <p>Ferramenta simples para gerar um QR Code a partir de um <em>BR Code</em> (copia e cola) ou a partir de campos básicos. Use com cuidado e valide o código gerado no seu banco antes de aceitar pagamentos.</p>
-
-  <section>
-    <h2>Modo A — Gerar a partir do BR Code (copia e cola)</h2>
-    <label for="brcodeInput">Cole aqui o BR Code (copia e cola / payload completo)</label>
-    <textarea id="brcodeInput" rows="3" placeholder="Ex: 000201...6304A13A"></textarea>
-    <div class="flex">
-      <button id="renderFromBrcode">Gerar QR a partir do BR Code</button>
-      <button id="copyBrcode">Copiar BR Code</button>
+<div class="container">
+  <header>
+    <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(90deg,var(--accent),#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:700;color:#042024">PIX</div>
+    <div>
+      <h1>Gerador PIX — QR & Copia e Cola</h1>
+      <div style="font-size:12px;color:var(--muted)">Chave: <strong>meuemail@dominio.com</strong> · Banco: <strong>Banco de Tal</strong></div>
     </div>
-    <small class="note">Se você já tem a string do BR Code (a tal "copia e cola"), cole-a aqui e clique em "Gerar QR" — o QR será compatível com apps bancários que suportam BR Code/PIX.</small>
-  </section>
+  </header>
 
-  <hr>
+  <div class="card">
+    <label for="amount">Valor (R$)</label>
+    <input id="amount" type="number" min="0" step="0.01" placeholder="Ex.: 12.50" inputmode="decimal" />
 
-  <section>
-    <h2>Modo B — Gerar BR Code a partir de campos (experimental)</h2>
     <div class="row">
-      <div class="col">
-        <label for="pixKey">Chave PIX (CPF/CNPJ/email/telefone/aleatória)</label>
-        <input id="pixKey" placeholder="ex: 12345678909 ou nome@exemplo.com" />
+      <button id="generate" class="btn">Gerar QR e Copia & Cola</button>
+    </div>
+
+    <div class="small">Titular: <strong>Fulano de Tal</strong></div>
+
+    <div id="result" style="display:none;">
+      <div class="qr-wrap">
+        <canvas id="qrcanvas" width="260" height="260"></canvas>
+        <div style="font-size:13px;color:var(--muted)">Aponte a câmera do app bancário ou use o código abaixo.</div>
       </div>
-      <div class="col">
-        <label for="amount">Valor (opcional)</label>
-        <input id="amount" placeholder="ex: 10.50" />
+
+      <div style="margin-top:12px;">
+        <label>Código PIX (copia e cola)</label>
+        <div id="pixcode" class="code-box"></div>
+
+        <div class="actions">
+          <button id="copyCode" class="action-btn">Copiar código</button>
+          <button id="downloadQR" class="action-btn">Baixar QR</button>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)">
+        Observação: o payload segue o padrão EMV (PIX). O campo "Banco de Tal" é apenas informativo na interface.
       </div>
     </div>
-    <div class="row">
-      <div class="col">
-        <label for="merchantName">Nome do recebedor (max 25)</label>
-        <input id="merchantName" placeholder="Razão social ou nome" maxlength="25" />
-      </div>
-      <div class="col">
-        <label for="merchantCity">Cidade do recebedor (max 15)</label>
-        <input id="merchantCity" placeholder="Cidade" maxlength="15" />
-      </div>
-    </div>
-    <label for="txid">TxID (identificador único da cobrança — até 25 caract.)</label>
-    <input id="txid" placeholder="ex: pedido-12345 (opcional)" maxlength="25" />
+  </div>
 
-    <div class="flex">
-      <button id="buildFromFields">Gerar BR Code & QR (experimental)</button>
-      <button id="copyBuilt">Copiar BR Code gerado</button>
-    </div>
-    <small class="note">Este gerador implementa a construção básica do BR Code (formato EMV) e adiciona o CRC16. É <strong>recomendado</strong> validar o BR Code/QR com sua instituição financeira antes de uso em produção.</small>
-  </section>
+  <footer>Desenvolvido para celular — chave fixa: <strong>meuemail@dominio.com</strong></footer>
+</div>
 
-  <hr>
+<script>
+/*
+  Implementação PIX EMV builder + CRC16 + QR generation.
+  Valores fixos conforme pedido:
+    chave: meuemail@dominio.com
+    titular: Fulano de Tal
+    banco (só para UI): Banco de Tal
+  Cidade definida como "SAO PAULO" (apenas para o campo 60).
+*/
 
-  <section>
-    <h2>Resultado</h2>
-    <div id="qr"></div>
-    <pre id="output" style="white-space:pre-wrap;background:#f8f8f8;padding:12px;border-radius:6px;margin-top:12px"></pre>
-  </section>
+// Valores fixos (conforme solicitado)
+const PIX_KEY = "meuemail@dominio.com";
+const MERCHANT_NAME = "Fulano de Tal";
+const MERCHANT_CITY = "SAO PAULO"; // usado no tag 60
+const BANK_NAME = "Banco de Tal"; // apenas exibido na UI
 
-  <footer>
-    <p>Gerado em cliente — sem servidor. Biblioteca QR usada: <code>qrcode</code>. Consulte o manual BR Code do Banco Central para especificações completas.</p>
-  </footer>
+// monta tag EMV: id (2 chars) + length (2 digits) + value
+function buildTag(id, value){
+  const v = String(value);
+  const len = String(v.length).padStart(2,'0');
+  return id + len + v;
+}
 
-  <!-- QR library (cdn) -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
-
-  <script>
-    // util: TLV builder (id two chars, value string) where length is two digits
-    function tlv(id, value){
-      const len = String(value.length).padStart(2,'0');
-      return id + len + value;
+// CRC16-CCITT (polynomial 0x1021) implementation (initial 0xFFFF) commonly used para PIX
+function crc16(payload){
+  let crc = 0xFFFF;
+  for(let i=0;i<payload.length;i++){
+    crc ^= payload.charCodeAt(i) << 8;
+    for(let j=0;j<8;j++){
+      crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1);
+      crc &= 0xFFFF;
     }
+  }
+  return crc.toString(16).toUpperCase().padStart(4,'0');
+}
 
-    // CRC16-CCITT (0x1021) implementation used by BR Code (initial 0xFFFF)
-    function crc16ccitt(str){
-      const poly = 0x1021;
-      let crc = 0xFFFF;
-      for(let i=0;i<str.length;i++){
-        crc ^= (str.charCodeAt(i) << 8);
-        for(let j=0;j<8;j++){
-          if((crc & 0x8000)!==0) crc = ((crc << 1) ^ poly) & 0xFFFF;
-          else crc = (crc << 1) & 0xFFFF;
-        }
-      }
-      return crc.toString(16).toUpperCase().padStart(4,'0');
-    }
+// Monta o payload EMV completo (sem o CRC final) e retorna o codigo completo com CRC
+function buildPixPayload(amount){
+  // Tags principais
+  const payloadFormatIndicator = buildTag("00","01");
+  // Merchant Account Information (26) sub-tags:
+  // 00 = GUI br.gov.bcb.pix
+  // 01 = chave
+  // optionally 02 description etc.
+  const mai = buildTag("00","br.gov.bcb.pix") + buildTag("01", PIX_KEY);
+  const maiTag = buildTag("26", mai);
 
-    // Build a simple static BR Code following common tags (minimal set)
-    function buildBrCode({pixKey, amount, merchantName, merchantCity, txid}){
-      // 00 Payload Format Indicator
-      let payload = tlv('00','01');
-      // 01 Point of Initiation Method (12 means dynamic? 11 static) -> use 12 (allows amount)
-      payload += tlv('01','12');
+  const merchantCategoryCode = buildTag("52","0000");
+  const transactionCurrency = buildTag("53","986"); // BRL
+  const amountTag = amount ? buildTag("54", Number(amount).toFixed(2)) : "";
+  const countryCode = buildTag("58","BR");
+  // merchant name (59) up to 25 chars
+  const mName = MERCHANT_NAME.length > 25 ? MERCHANT_NAME.slice(0,25) : MERCHANT_NAME;
+  const merchantNameTag = buildTag("59", mName);
+  const mCity = MERCHANT_CITY.length > 15 ? MERCHANT_CITY.slice(0,15) : MERCHANT_CITY;
+  const merchantCityTag = buildTag("60", mCity);
 
-      // 26 Merchant Account Information (Pix)
-      // inside 26: 00 - GUI; 01 - chave OR 25+ may include URL for dynamic. We'll use 00 and 01.
-      const gui = tlv('00','br.gov.bcb.pix');
-      const key = tlv('01',pixKey || '');
-      const mai = gui + key;
-      payload += tlv('26', mai);
+  // Additional data field template (62) subtag 05: txid (pode ser "*", vazio, ou id). Usaremos "*" para permitir usa-lo como pagamento sem txid fixo.
+  const additional = buildTag("05", "*");
+  const additionalTag = buildTag("62", additional);
 
-      // 52 Merchant Category Code (default 0000)
-      payload += tlv('52','0000');
-      // 53 Transaction Currency (986 = BRL)
-      payload += tlv('53','986');
-      // 54 Transaction amount (optional) - value must use dot as decimal separator
-      if(amount && amount.trim()!==''){
-        // format: max two decimals
-        const v = parseFloat(amount).toFixed(2);
-        payload += tlv('54', v);
-      }
-      // 58 Country code (BR)
-      payload += tlv('58','BR');
-      // 59 Merchant name
-      payload += tlv('59',(merchantName||'').toUpperCase().slice(0,25));
-      // 60 Merchant city
-      payload += tlv('60',(merchantCity||'').toUpperCase().slice(0,15));
-      // 62 Additional Data Field Template (txid as 05)
-      const tx = txid? tlv('05', txid) : '';
-      if(tx!==''){
-        payload += tlv('62', tx);
-      }
+  // Monta tudo e acrescenta tag CRC placeholder (63) com length 04 (sem o valor do CRC ainda)
+  const withoutCrc = payloadFormatIndicator + maiTag + merchantCategoryCode + transactionCurrency + amountTag + countryCode + merchantNameTag + merchantCityTag + additionalTag + "6304";
+  const crc = crc16(withoutCrc);
+  const full = withoutCrc + crc;
+  return full;
+}
 
-      // 63 CRC - compute on payload + '6304'
-      const payloadForCrc = payload + '6304';
-      const crc = crc16ccitt(payloadForCrc);
-      payload += tlv('63', crc);
-      return payload;
-    }
+// UI handlers
+const btn = document.getElementById("generate");
+const amountInput = document.getElementById("amount");
+const resultBox = document.getElementById("result");
+const pixCodeDiv = document.getElementById("pixcode");
+const copyBtn = document.getElementById("copyCode");
+const downloadBtn = document.getElementById("downloadQR");
+const canvas = document.getElementById("qrcanvas");
 
-    // render QR using qrcode lib
-    function renderQr(container, text){
-      container.innerHTML='';
-      const canvas = document.createElement('canvas');
-      container.appendChild(canvas);
-      QRCode.toCanvas(canvas, text, {width:260}, function (error) {
-        if (error) console.error(error);
-      });
-    }
+btn.addEventListener("click", async ()=>{
+  const amtRaw = amountInput.value;
+  // aceita vazio (QR sem valor) ou valor positivo
+  if(amtRaw !== "" && Number(amtRaw) <= 0){
+    alert("Informe um valor maior que zero ou deixe vazio para sem valor.");
+    return;
+  }
+  const amount = amtRaw === "" ? null : Number(amtRaw).toFixed(2);
+  const payload = buildPixPayload(amount);
+  pixCodeDiv.textContent = payload;
+  resultBox.style.display = "block";
 
-    // UI bindings
-    const brInput = document.getElementById('brcodeInput');
-    const renderFromBrcodeBtn = document.getElementById('renderFromBrcode');
-    const copyBrcodeBtn = document.getElementById('copyBrcode');
-    const buildBtn = document.getElementById('buildFromFields');
-    const copyBuiltBtn = document.getElementById('copyBuilt');
-    const out = document.getElementById('output');
-    const qrDiv = document.getElementById('qr');
-
-    renderFromBrcodeBtn.addEventListener('click', ()=>{
-      const v = brInput.value.trim();
-      if(!v){ alert('Cole um BR Code válido na caixa.'); return; }
-      out.textContent = v;
-      renderQr(qrDiv, v);
+  // Gera QR no canvas (qrcode lib)
+  try {
+    // tamanho dependendo do dispositivo: vamos adaptar o canvas
+    const size = Math.min(window.innerWidth - 60, 520);
+    canvas.width = size;
+    canvas.height = size;
+    await QRCode.toCanvas(canvas, payload, {
+      width: size,
+      margin: 1
     });
+  } catch (e){
+    console.error(e);
+    alert("Erro gerando QR: " + e);
+  }
+});
 
-    copyBrcodeBtn.addEventListener('click', ()=>{
-      const v = brInput.value.trim();
-      if(!v){ alert('Nada para copiar.'); return; }
-      navigator.clipboard.writeText(v).then(()=>alert('BR Code copiado para a área de transferência.'))
-        .catch(()=>alert('Não foi possível copiar.'));
-    });
+// copiar código
+copyBtn.addEventListener("click", async ()=>{
+  const text = pixCodeDiv.textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    copyBtn.textContent = "Copiado!";
+    setTimeout(()=> copyBtn.textContent = "Copiar código", 1200);
+  } catch (e){
+    alert("Não foi possível copiar automaticamente. Selecione e copie manualmente.");
+  }
+});
 
-    buildBtn.addEventListener('click', ()=>{
-      const pixKey = document.getElementById('pixKey').value.trim();
-      if(!pixKey){ alert('É necessária a chave PIX para gerar o BR Code.'); return; }
-      const amount = document.getElementById('amount').value.trim();
-      const merchantName = document.getElementById('merchantName').value.trim() || '';
-      const merchantCity = document.getElementById('merchantCity').value.trim() || '';
-      const txid = document.getElementById('txid').value.trim() || '';
-      try{
-        const br = buildBrCode({pixKey, amount, merchantName, merchantCity, txid});
-        out.textContent = br;
-        renderQr(qrDiv, br);
-        brInput.value = br; // also place in copia e cola box
-      }catch(e){
-        console.error(e); alert('Erro ao gerar BR Code: '+e.message);
-      }
-    });
-
-    copyBuiltBtn.addEventListener('click', ()=>{
-      const v = out.textContent.trim();
-      if(!v){ alert('Nada gerado para copiar.'); return; }
-      navigator.clipboard.writeText(v).then(()=>alert('BR Code copiado para a área de transferência.'))
-        .catch(()=>alert('Não foi possível copiar.'));
-    });
-
-    // small helper: render an example
-    const example = '00020101021226910014br.gov.bcb.pix2569qrcodes.fiduciascm.digital/v1/qr/ded35b9c-fdf8-4789-ba97-24f26cc9327252040000530398654041.005802BR5914BEST TRANSPORT6007BEIJING6229052544e554f94d8a4d4cb72a1848f630470AA';
-    // (just a display example) -- not used to prefill
-
-  </script>
+// baixar QR
+downloadBtn.addEventListener("click", ()=>{
+  const link = document.createElement("a");
+  link.download = "pix_qr.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+});
+</script>
 </body>
 </html>
