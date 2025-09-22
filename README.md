@@ -57,6 +57,18 @@ O sistema exibe o valor total arrecadado em tempo real e gera QR Code Pix para d
 
 ---
 
+## 🔑 **Integração com Mercado Pago**
+
+O projeto usa a API Pix do Mercado Pago.
+1. **Obtenha as credenciais**
+   - Acesse o Painel do Mercado Pago Developers (https://www.mercadopago.com.br/developers/panel/app)
+   - Copie o Access Token (modo *TEST* ou *PROD*).
+2. **Configure no servidor**
+   - No arquivo *server/create_payment.php* e *server/check_payment.php*, adicione seu token:
+
+*$mp_token = "SEU_TOKEN_MERCADO_PAGO";*
+
+
 ## 🗄️ Banco de Dados
 
 Script `schema.sql`:
@@ -73,12 +85,4 @@ CREATE TABLE donations (
   status ENUM('pending','approved','rejected') DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
----
 
-## 🔑 **Integração com Mercado Pago**
-
-O projeto usa a API Pix do Mercado Pago.
-
-1. Obtenha as credenciais
-
-Acesse o Painel do Mercado Pago Developers
