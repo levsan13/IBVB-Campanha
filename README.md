@@ -18,7 +18,7 @@ O sistema exibe o valor total arrecadado em tempo real e gera QR Code Pix para d
 │ ├── check_payment.php # Confirma se o pagamento foi aprovado
 │ ├── total.php # Soma todas as doações aprovadas
 └── schema.sql # Script do banco de dados MySQL
-/
+\
 ---
 
 ## 🛠️ Tecnologias Utilizadas
