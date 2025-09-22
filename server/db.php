@@ -1,9 +1,9 @@
 <?php
 // Configuração da base de dados. Edite com seus valores.
-$DB_HOST = 'database-ibvb.ckbkikmiesan.us-east-1.rds.amazonaws.com';
-$DB_USER = 'admin';
-$DB_PASS = 'bibliasagrada';
-$DB_NAME = 'meu_banco';
+$DB_HOST = 'HOST_DATA_BASE';
+$DB_USER = 'USUARIO';
+$DB_PASS = 'SENHA';
+$DB_NAME = 'NOME_DO_BANCO';
 
 
 $mysqli = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
