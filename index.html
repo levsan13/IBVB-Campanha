@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Campanha de Doação IBVB</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div>Arrecadado até o momento</div>
+      <div id="total-display">R$ 0,00</div>
+    </div>
+    <div class="progress-wrap">
+      <div id="progress-bar" class="progress-bar" style="width:0%"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>Campanha de Apoio à Igreja</h1>
+    <p class="lead">A Igreja Vale de Benção Santa Cecília está lançando uma campanha para cobrir despesas de compra de nova cadeiras para o templo até o seu aniversário em Novembro de 2025. Sua doação faz a diferença: ajuda a conservar nosso espaço. Cada contribuição, por menor que seja, conta — junte-se a nós!</p>
+
+    <a href="donate.html" class="btn primary">Doe para a campanha</a>
+
+    <small class="note">Suas doações são registradas com segurança. Obrigado por ajudar!</small>
+  </main>
+
+<script>
+  (function(){
+    const formatBR = n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+    async function fetchTotal(){
+      try{
+        const res = await fetch('server/total.php');
+        const data = await res.json();
+        const total = Number(data.total) || 0;
+        document.querySelector('#total-display').textContent = 'R$ '+formatBR(total);
+        const goal = Number(data.goal) || 10000;
+        const pct = Math.min(100, Math.round((total/goal)*100));
+        const pbar = document.getElementById('progress-bar'); if(pbar) pbar.style.width = pct+'%';
+        }catch(e){ console.warn('Erro ao buscar total', e); }
+      }
+      setInterval(fetchTotal, 5000);
+      fetchTotal();
+  
+  })();
+</script>
+  
+</body>
+  <footer class="footer">
+  <p>
+    © 2025 Igreja Vale de Bênção - Santa Cecília. Todos os direitos reservados.  
+    <a href="privacidade.html">Política de Privacidade</a>
+  </p>
+</footer>
+</html>
+

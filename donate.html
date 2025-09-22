@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Campanha de Doação IBVB</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div>Arrecadado até o momento</div>
+      <div id="total-display">R$ 0,00</div>
+    </div>
+    <div class="progress-wrap">
+      <div id="progress-bar" class="progress-bar" style="width:0%"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>Contribua</h1>
+    <form id="donation-form">
+      <label for="amount">Valor (R$)</label>
+      <input id="amount" name="amount" inputmode="decimal" pattern="[0-9.,]*" placeholder="Ex: 50,00" required>
+
+      <label for="name">Nome</label>
+      <input id="name" name="name" placeholder="Fulano de Tal" required>
+
+      <label for="phone">Telefone</label>
+      <input id="phone" name="phone" inputmode="tel" placeholder="(xx) 9xxxx-xxxx" required>
+
+      <label for="city">Cidade - UF</label>
+      <input id="city" name="city" placeholder="Fortaleza - CE" required>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="consent" required>
+          Eu li e concordo com a <a href="privacidade.html" target="_blank">Política de Privacidade</a>,
+          autorizando o uso dos meus dados para fins de gestão desta campanha de doação.
+        </label>
+      </div>
+  
+      <button type="button" id="proceed" class="btn primary">Prosseguir</button>
+    </form>
+
+    <div id="txid" class="hidden"></div>    
+
+    <div id="pix-area" class="hidden">
+      <h2>Pix</h2>
+      <p>Use o QR Code abaixo ou copie e cole a chave Pix.</p>
+      <div id="pix-qr" alt="QR Code PIX"></div>
+      <div class="pix-info">
+        <label>Chave PIX</label>
+        <div id="pix-key" class="pix-box">CHAVE_PIX</div>
+
+        <label>Titular</label>
+        <div class="pix-box">SEU_NOME</div>
+
+        <label>Banco</label>
+        <div class="pix-box">SEU_BANCO</div>
+
+        <label>Cidade</label>
+        <div class="pix-box">SUA_CIDADE_ESTADO</div>
+
+        <label>PIX (copia e cola)</label>
+        <textarea id="pix-payload" readonly class="pix-box" rows="3"></textarea>
+        <div class="message" id="status-msg">Estamos aguardando a confirmação do pagamento...</div>
+        </div>
+    </div>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+const formatBR = n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+
+
+async function fetchTotal(){
+try{
+const res = await fetch('server/total.php');
+const data = await res.json();
+const total = Number(data.total) || 0;
+document.querySelector('#total-display').textContent = 'R$ '+formatBR(total);
+const goal = Number(data.goal) || 10000;
+const pct = Math.min(100, Math.round((total/goal)*100));
+const pbar = document.getElementById('progress-bar'); if(pbar) pbar.style.width = pct+'%';
+}catch(e){ console.warn('Erro ao buscar total', e); }
+}
+
+
+function generateQRCode(payload) {
+  qrContainer = document.getElementById("pix-qr");
+  qrContainer.innerHTML = ""; // Limpa QR anterior
+  new QRCode(qrContainer, {
+    text: payload,
+    width: 200,
+    height: 200
+    });
+}
+
+
+
+async function onProceed(){
+const name = document.getElementById('name').value.trim();
+const amount = parseFloat(document.getElementById('amount').value.replace(',','.'));
+const phone = document.getElementById('phone').value.trim();
+const city = document.getElementById('city').value.trim();
+const policy = document.getElementById('consent');
+
+  if(!amount || amount<=0){ alert('Informe um valor válido.'); return; }
+  if(!phone){ alert('Informe o telefone.'); return; }
+  if(!city){ alert('Informe a cidade.'); return; }
+  if(!name){ alert('Informe um nome.'); return; }
+  if(!policy.checked){ alert('Confirme a aceitação das políticas de privacidade.'); return; }
+
+const btn = document.getElementById('proceed');
+btn.disabled = true; btn.textContent = 'Gerando pagamento...';
+
+
+try{
+const res = await fetch('server/create_mp_payment.php', {
+method:'POST', headers:{'Content-Type':'application/json'},
+body: JSON.stringify({name, amount, phone, city})
+});
+const data = await res.json();
+if(!data.success){ alert('Erro: '+(data.error||'')); btn.disabled=false; btn.textContent='Prosseguir'; return; }
+
+
+document.getElementById('pix-payload').textContent = data.brcode || data.qr_text || '';
+generateQRCode(document.getElementById('pix-payload').textContent);
+document.getElementById('pix-area').classList.remove('hidden');
+
+
+const msgEl = document.getElementById('status-msg');
+msgEl.textContent = 'Pagamento pendente. Aguardando confirmação via webhook...';
+
+
+// Polling para checar status até confirmação
+const checkStatus = async ()=>{
+try{
+const res = await fetch('server/check_payment.php',{
+method:'POST', headers:{'Content-Type':'application/json'},
+body: JSON.stringify({mp_payment_id:data.mp_payment_id, txid:data.txid})
+});
+const r = await res.json();
+if(r.status==='paid'){
+msgEl.textContent = 'Pagamento confirmado! Muito obrigado pela sua doação.';
+setTimeout(()=>{ window.location.href='index.html'; }, 8000);
+return;
+}
+}catch(e){ console.error('Erro checando status', e); }
+setTimeout(checkStatus, 5000);
+};
+setTimeout(checkStatus, 5000);
+
+
+}catch(e){ console.error(e); alert('Erro ao criar pagamento'); }
+
+
+btn.disabled=false; btn.textContent='Prosseguir';
+}
+
+
+document.getElementById('proceed').addEventListener('click', onProceed);
+setInterval(fetchTotal, 5000);
+fetchTotal();
+})();
+</script>
+  <footer class="footer">
+  <p>
+    © 2025 Igreja Vale de Bênção - Santa Cecília. Todos os direitos reservados.  
+    <a href="privacidade.html">Política de Privacidade</a>
+  </p>
+</footer>
+</html>
