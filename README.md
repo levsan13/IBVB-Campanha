@@ -25,7 +25,7 @@ Este é um site desenvolvido para gerenciar uma campanha de doações via **Pix*
 
 - **Integração com Mercado Pago**
   - Geração de cobrança Pix via API.
-  - Uso de **webhook (`server/webhook_mp.php`)** para confirmar pagamentos em tempo real.
+  - Uso de **check_payment (`server/check_payment.php`)** para confirmar pagamentos em tempo real.
   - Verificação do status do pagamento no banco de dados.
 
 - **Banco de Dados**
@@ -41,16 +41,12 @@ Este é um site desenvolvido para gerenciar uma campanha de doações via **Pix*
 ├── index.html               # Página inicial da campanha
 ├── donate.html              # Página de doação
 ├── assets/                  # Recursos estáticos (CSS, imagens, etc.)
-│   ├── styles.css           # Estilos do site
-│   ├── fundo-home.jpg       # Imagem de fundo da home
-│   └── fundo-donate.jpg     # Imagem de fundo da página de doação
+│   └── styles.css           # Estilos do site
 ├── server/                  # Arquivos PHP de backend
-│   ├── config.php           # Configuração do banco e credenciais Mercado Pago
+│   ├── db.php               # Configuração do banco e credenciais Mercado Pago
 │   ├── create_payment.php   # Criação de cobranças Pix via Mercado Pago
-│   ├── webhook_mp.php       # Webhook para confirmar pagamentos
 │   ├── check_payment.php    # Consulta status de pagamento e atualiza DB
-│   ├── total.php            # Retorna total de doações aprovadas
-│   └── generate_qr.php      # Geração de QR Code em PNG
+│   └── total.php            # Retorna total de doações aprovadas
 └── README.md                # Documentação do projeto
 ```
 
@@ -58,7 +54,7 @@ Este é um site desenvolvido para gerenciar uma campanha de doações via **Pix*
 
 ## 🛠️ Configuração do Banco de Dados
 
-Crie o banco e a tabela:
+1. Crie o banco e a tabela:
 
 ```sql
 CREATE DATABASE donations_db;
@@ -76,6 +72,25 @@ CREATE TABLE donations (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
+2. No arquivo `server/db.php`, configure:
+
+```php
+<?php
+// Configuração da base de dados. Edite com seus valores.
+$DB_HOST = 'HOST_DATA_BASE';
+$DB_USER = 'USUARIO';
+$DB_PASS = 'SENHA';
+$DB_NAME = 'NOME_DO_BANCO';
+
+
+$mysqli = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
+if($mysqli->connect_errno){
+http_response_code(500);
+die(json_encode(['success'=>false,'error'=>'DB_CONNECT','msg'=>$mysqli->connect_error]));
+}
+$mysqli->set_charset('utf8mb4');
+?>
+```
 
 ---
 
@@ -83,27 +98,11 @@ CREATE TABLE donations (
 
 1. Crie uma conta no [Mercado Pago Developers](https://www.mercadopago.com.br/developers).  
 2. Obtenha suas **credenciais** em: [Credenciais Mercado Pago](https://www.mercadopago.com.br/developers/panel/credentials)  
-   - Use o `ACCESS_TOKEN` **de produção** (não use o de teste em ambiente real).  
-3. No arquivo `server/config.php`, configure:
-
-```php
-<?php
-// Credenciais Mercado Pago
-define("MP_ACCESS_TOKEN", "SEU_ACCESS_TOKEN");
-
-// Configuração do banco
-$host = "localhost";
-$dbname = "donations_db";
-$username = "root";
-$password = "SUA_SENHA";
-
-// Conexão
-$conn = new mysqli($host, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Erro ao conectar no banco: " . $conn->connect_error);
-}
-?>
-```
+   - Use o `ACCESS_TOKEN` **de produção** (não use o de teste em ambiente real).
+3. Em `server/check_payment.php` e `server/create_mp_payment.php`, altere:
+   ```php
+   $mp_token = "SEU_TOKEN_MERCADO_PAGO";
+   ``` 
 
 ---
 
@@ -122,8 +121,7 @@ if ($conn->connect_error) {
 ---
 
 ## 🎨 Personalização
-
-- **Imagens de fundo** podem ser alteradas em `assets/styles.css`.  
+  
 - **Textos da campanha** podem ser editados diretamente em `index.html`.  
 - **Banco e titular Pix** são configurados no Mercado Pago.
 
@@ -143,10 +141,6 @@ if ($conn->connect_error) {
    sudo chown -R apache:apache /var/www/html
    sudo systemctl enable httpd
    sudo systemctl start httpd
-   ```
-6. Configure o **webhook no Mercado Pago** para apontar para:  
-   ```
-   https://SEU_DOMINIO/server/webhook_mp.php
    ```
 
 ---
