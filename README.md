@@ -64,9 +64,9 @@ O projeto usa a API Pix do Mercado Pago.
    - Acesse o Painel do Mercado Pago Developers (https://www.mercadopago.com.br/developers/panel/app)
    - Copie o Access Token (modo *TEST* ou *PROD*).
 2. **Configure no servidor**
-   - No arquivo *server/create_payment.php* e *server/check_payment.php*, adicione seu token:
+   - No arquivo server/create_payment.php e server/check_payment.php adicione seu token:
 
-*$mp_token = "SEU_TOKEN_MERCADO_PAGO";*
+$mp_token = "SEU_TOKEN_MERCADO_PAGO";
 
 
 ## 🗄️ Banco de Dados
