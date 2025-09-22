@@ -73,3 +73,12 @@ CREATE TABLE donations (
   status ENUM('pending','approved','rejected') DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+---
+
+## 🔑 **Integração com Mercado Pago**
+
+O projeto usa a API Pix do Mercado Pago.
+
+1. Obtenha as credenciais
+
+Acesse o Painel do Mercado Pago Developers
