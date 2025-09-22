@@ -1,88 +1,156 @@
-# 💒 Site de Doações - Igreja
+# 📌 Campanha de Doação - Igreja
 
-Este projeto é um **site responsivo para campanhas de doação via Pix**, totalmente integrado com o **Mercado Pago**.  
-O sistema exibe o valor total arrecadado em tempo real e gera QR Code Pix para doação, além de confirmar pagamentos automaticamente.
-
----
-
-## 📂 Estrutura do Projeto
-
-'''
-├── index.html # Página inicial com descrição da campanha e total arrecadado
-├── donate.html # Página de doação (gera QRCode Pix e Pix Copia & Cola)
-├── assets/
-│ ├── styles.css # Estilos do site (responsivo e com fundo personalizado)
-├── server/
-│ ├── db.php # Conexão com MySQL
-│ ├── create_payment.php # Cria cobrança Pix via API Mercado Pago
-│ ├── check_payment.php # Confirma se o pagamento foi aprovado
-│ ├── total.php # Soma todas as doações aprovadas
-└── schema.sql # Script do banco de dados MySQL
-'''
----
-
-## 🛠️ Tecnologias Utilizadas
-
-- **Frontend:** HTML5, CSS3, JavaScript (fetch API para chamadas assíncronas)
-- **Backend:** PHP 8
-- **Banco de Dados:** MySQL (MariaDB)
-- **Hospedagem:** AWS EC2 (Apache2 + PHP + MySQL)
-- **Integração de Pagamento:** Mercado Pago (Pix)
+Este é um site desenvolvido para gerenciar uma campanha de doações via **Pix** utilizando a **API do Mercado Pago**. O sistema é otimizado para **uso em celulares**, possui integração com banco de dados MySQL e atualiza automaticamente o valor arrecadado conforme os pagamentos são confirmados.
 
 ---
 
-## 📊 Fluxo de Funcionamento
+## 🚀 Funcionalidades
 
-1. O usuário acessa a **página inicial (index.html)**:
-   - Visualiza o texto explicativo da campanha.
-   - Vê o **valor total já arrecadado** (atualizado a cada 5 segundos via `total.php`).
-   - Clica em **"Doe para a campanha"** para ser redirecionado para `donate.html`.
+- **Página inicial (`index.html`)**
+  - Exibe uma barra superior com o valor total arrecadado.
+  - Mostra uma justificativa/explicação da campanha.
+  - Botão **"Doe para a campanha"** que leva o usuário para a página de doação.
 
-2. Na **página de doação (donate.html)**:
-   - O usuário preenche **nome, valor da doação, telefone e cidade**.
-   - O sistema chama `server/create_payment.php`:
-     - Cria uma **cobrança Pix** usando a API do Mercado Pago.
-     - Retorna o **QRCode Pix** e o **Pix Copia & Cola**.
-   - O usuário pode pagar via QR Code ou Pix Copia & Cola.
+- **Página de doação (`donate.html`)**
+  - Usuário informa:
+    - Nome
+    - Cidade
+    - Telefone
+    - Valor da doação
+  - O sistema gera automaticamente:
+    - **QR Code Pix**
+    - **Pix Copia e Cola**
+  - Confirmação automática do pagamento.
+  - Após confirmado, exibe mensagem de sucesso e redireciona o usuário para a página inicial.
 
-3. **Confirmação do pagamento**:
-   - É feito um fecth com server/check_payment.php que se comunica com a API do mercado pago
-   - O server/check_payment.php atualiza automaticamente o **status da doação no banco de dados** (aprovado, pendente).
-   - O usuário vê em `donate.html` a confirmação do pagamento.
-   - Após alguns segundos, o site redireciona automaticamente para `index.html`.
+- **Integração com Mercado Pago**
+  - Geração de cobrança Pix via API.
+  - Uso de **webhook (`server/webhook_mp.php`)** para confirmar pagamentos em tempo real.
+  - Verificação do status do pagamento no banco de dados.
 
-4. **Cálculo do total arrecadado**:
-   - `server/total.php` soma apenas os pagamentos **com status "approved"** no banco de dados.
-   - O valor aparece no topo da página inicial.
+- **Banco de Dados**
+  - Todas as doações são registradas em uma tabela MySQL.
+  - Apenas doações **aprovadas** são somadas ao total exibido.
 
 ---
 
-## 🔑 **Integração com Mercado Pago**
+## 📂 Estrutura de Pastas
 
-O projeto usa a API Pix do Mercado Pago.
-1. **Obtenha as credenciais**
-   - Acesse o Painel do Mercado Pago Developers (https://www.mercadopago.com.br/developers/panel/app)
-   - Copie o Access Token (modo *TEST* ou *PROD*).
-2. **Configure no servidor**
-   - No arquivo server/create_payment.php e server/check_payment.php adicione seu token:
+```
+.
+├── index.html               # Página inicial da campanha
+├── donate.html              # Página de doação
+├── assets/                  # Recursos estáticos (CSS, imagens, etc.)
+│   ├── styles.css           # Estilos do site
+│   ├── fundo-home.jpg       # Imagem de fundo da home
+│   └── fundo-donate.jpg     # Imagem de fundo da página de doação
+├── server/                  # Arquivos PHP de backend
+│   ├── config.php           # Configuração do banco e credenciais Mercado Pago
+│   ├── create_payment.php   # Criação de cobranças Pix via Mercado Pago
+│   ├── webhook_mp.php       # Webhook para confirmar pagamentos
+│   ├── check_payment.php    # Consulta status de pagamento e atualiza DB
+│   ├── total.php            # Retorna total de doações aprovadas
+│   └── generate_qr.php      # Geração de QR Code em PNG
+└── README.md                # Documentação do projeto
+```
 
-$mp_token = "SEU_TOKEN_MERCADO_PAGO";
+---
 
+## 🛠️ Configuração do Banco de Dados
 
-## 🗄️ Banco de Dados
-
-Script `schema.sql`:
+Crie o banco e a tabela:
 
 ```sql
-CREATE TABLE donations (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  phone VARCHAR(20) NOT NULL,
-  city VARCHAR(100) NOT NULL,
-  amount DECIMAL(10,2) NOT NULL,
-  txid VARCHAR(100) UNIQUE NOT NULL,
-  mp_payment_id VARCHAR(100) NOT NULL,
-  status ENUM('pending','approved','rejected') DEFAULT 'pending',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+CREATE DATABASE donations_db;
+USE donations_db;
 
+CREATE TABLE donations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    value DECIMAL(10,2) NOT NULL,
+    txid VARCHAR(100) NOT NULL,
+    mp_payment_id VARCHAR(50) NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+## 🔑 Integração com Mercado Pago
+
+1. Crie uma conta no [Mercado Pago Developers](https://www.mercadopago.com.br/developers).  
+2. Obtenha suas **credenciais** em: [Credenciais Mercado Pago](https://www.mercadopago.com.br/developers/panel/credentials)  
+   - Use o `ACCESS_TOKEN` **de produção** (não use o de teste em ambiente real).  
+3. No arquivo `server/config.php`, configure:
+
+```php
+<?php
+// Credenciais Mercado Pago
+define("MP_ACCESS_TOKEN", "SEU_ACCESS_TOKEN");
+
+// Configuração do banco
+$host = "localhost";
+$dbname = "donations_db";
+$username = "root";
+$password = "SUA_SENHA";
+
+// Conexão
+$conn = new mysqli($host, $username, $password, $dbname);
+if ($conn->connect_error) {
+    die("Erro ao conectar no banco: " . $conn->connect_error);
+}
+?>
+```
+
+---
+
+## 🌐 Fluxo do Sistema
+
+1. Usuário acessa `index.html` e vê o valor total arrecadado.  
+2. Ao clicar em **"Doe para a campanha"**, vai para `donate.html`.  
+3. Preenche os dados e envia → `server/create_payment.php` cria cobrança no Mercado Pago.  
+4. É exibido o **QR Code** e o **Pix Copia e Cola**.  
+5. Quando o usuário paga:
+   - O **Mercado Pago envia notificação** para `server/webhook_mp.php`.  
+   - O webhook confirma o pagamento e atualiza o status no MySQL.  
+6. O total exibido em `index.html` é atualizado automaticamente (via `server/total.php`).  
+7. Após a confirmação, `donate.html` mostra mensagem e redireciona para a página inicial.
+
+---
+
+## 🎨 Personalização
+
+- **Imagens de fundo** podem ser alteradas em `assets/styles.css`.  
+- **Textos da campanha** podem ser editados diretamente em `index.html`.  
+- **Banco e titular Pix** são configurados no Mercado Pago.
+
+---
+
+## 📲 Deploy na AWS (EC2)
+
+1. Crie uma instância EC2 (Amazon Linux ou Ubuntu).  
+2. Instale Apache, PHP e MySQL:
+   ```bash
+   sudo yum install -y httpd php php-mysqli mariadb105-server
+   ```
+3. Configure o banco de dados.  
+4. Suba os arquivos do projeto para `/var/www/html/`.  
+5. Configure permissões:
+   ```bash
+   sudo chown -R apache:apache /var/www/html
+   sudo systemctl enable httpd
+   sudo systemctl start httpd
+   ```
+6. Configure o **webhook no Mercado Pago** para apontar para:  
+   ```
+   https://SEU_DOMINIO/server/webhook_mp.php
+   ```
+
+---
+
+## ✅ Conclusão
+
+Este site permite gerenciar uma campanha de doações **simples, segura e automatizada**, com Pix via Mercado Pago, banco de dados MySQL e hospedagem em AWS EC2.
