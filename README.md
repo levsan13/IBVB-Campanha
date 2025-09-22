@@ -1,18 +1,75 @@
-# Site de campanha de doação (mobile)
+# 💒 Site de Doações - Igreja
 
+Este projeto é um **site responsivo para campanhas de doação via Pix**, totalmente integrado com o **Mercado Pago**.  
+O sistema exibe o valor total arrecadado em tempo real e gera QR Code Pix para doação, além de confirmar pagamentos automaticamente.
 
-Arquivos incluídos:
-- index.html (página inicial / progresso / justificativa)
-- donate.html (formulário de doação e etapa de confirmação)
-- assets/styles.css (estilos responsivos focados em celular)
-- assets/app.js (JS front-end: fetch de total, validação, geração de QR via Chart API)
-- server/db.php (configuração de conexão MySQL)
-- server/process_donation.php (recebe doação e grava no banco)
-- server/total.php (retorna total arrecadado em JSON)
+---
 
+## 📂 Estrutura do Projeto
 
-**Instruções de implantação**
-1. Coloque os arquivos `index.html`, `donate.html` e a pasta `assets/` no root do seu servidor web.
-2. Coloque `server/` em um servidor com PHP 7.x+ e MySQL disponível.
-3. Edite `server/db.php` com host, usuário, senha e nome do banco.
-4. Importe a tabela SQL (arquivo abaixo) no seu banco.
+/
+├── index.html # Página inicial com descrição da campanha e total arrecadado
+├── donate.html # Página de doação (gera QRCode Pix e Pix Copia & Cola)
+├── assets/
+│ ├── styles.css # Estilos do site (responsivo e com fundo personalizado)
+├── server/
+│ ├── db.php # Conexão com MySQL
+│ ├── create_payment.php # Cria cobrança Pix via API Mercado Pago
+│ ├── check_payment.php # Confirma se o pagamento foi aprovado
+│ ├── total.php # Soma todas as doações aprovadas
+└── schema.sql # Script do banco de dados MySQL
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+- **Frontend:** HTML5, CSS3, JavaScript (fetch API para chamadas assíncronas)
+- **Backend:** PHP 8
+- **Banco de Dados:** MySQL (MariaDB)
+- **Hospedagem:** AWS EC2 (Apache2 + PHP + MySQL)
+- **Integração de Pagamento:** Mercado Pago (Pix)
+
+---
+
+## 📊 Fluxo de Funcionamento
+
+1. O usuário acessa a **página inicial (index.html)**:
+   - Visualiza o texto explicativo da campanha.
+   - Vê o **valor total já arrecadado** (atualizado a cada 5 segundos via `total.php`).
+   - Clica em **"Doe para a campanha"** para ser redirecionado para `donate.html`.
+
+2. Na **página de doação (donate.html)**:
+   - O usuário preenche **nome, valor da doação, telefone e cidade**.
+   - O sistema chama `server/create_payment.php`:
+     - Cria uma **cobrança Pix** usando a API do Mercado Pago.
+     - Retorna o **QRCode Pix** e o **Pix Copia & Cola**.
+   - O usuário pode pagar via QR Code ou Pix Copia & Cola.
+
+3. **Confirmação do pagamento**:
+   - É feito um fecth com server/check_payment.php que se comunica com a API do mercado pago
+   - O server/check_payment.php atualiza automaticamente o **status da doação no banco de dados** (aprovado, pendente).
+   - O usuário vê em `donate.html` a confirmação do pagamento.
+   - Após alguns segundos, o site redireciona automaticamente para `index.html`.
+
+4. **Cálculo do total arrecadado**:
+   - `server/total.php` soma apenas os pagamentos **com status "approved"** no banco de dados.
+   - O valor aparece no topo da página inicial.
+
+---
+
+## 🗄️ Banco de Dados
+
+Script `donations.sql`:
+
+```sql
+CREATE TABLE donations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  phone VARCHAR(20) NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  txid VARCHAR(100) UNIQUE NOT NULL,
+  mp_payment_id VARCHAR(100) NOT NULL,
+  status ENUM('pending','approved','rejected') DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
