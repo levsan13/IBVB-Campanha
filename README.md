@@ -40,6 +40,7 @@ Este é um site desenvolvido para gerenciar uma campanha de doações via **Pix*
 .
 ├── index.html               # Página inicial da campanha
 ├── donate.html              # Página de doação
+├── privacidade.html         # Declarção de privacidade para uso de dados durante a campanha
 ├── assets/                  # Recursos estáticos (CSS, imagens, etc.)
 │   └── styles.css           # Estilos do site
 ├── server/                  # Arquivos PHP de backend
