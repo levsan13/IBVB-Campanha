@@ -113,8 +113,7 @@ $mysqli->set_charset('utf8mb4');
 3. Preenche os dados e envia → `server/create_payment.php` cria cobrança no Mercado Pago.  
 4. É exibido o **QR Code** e o **Pix Copia e Cola**.  
 5. Quando o usuário paga:
-   - O **Mercado Pago envia notificação** para `server/webhook_mp.php`.  
-   - O webhook confirma o pagamento e atualiza o status no MySQL.  
+   - O `server/check_payment.php` atualiza o status do pagamento no MySQL.  
 6. O total exibido em `index.html` é atualizado automaticamente (via `server/total.php`).  
 7. Após a confirmação, `donate.html` mostra mensagem e redireciona para a página inicial.
 
