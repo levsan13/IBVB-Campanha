@@ -10,7 +10,7 @@ error_reporting(E_ALL);
 $raw = file_get_contents('php://input');
 $data = json_decode($raw, true);
 $mp_payment_id = $data['mp_payment_id'] ?? null;
-$mp_token = $MP_ACCESS_TOKEN;
+$mp_token = "SEU_TOKEN_MERCADO_LIVRE";
 
 
 if(!$mp_payment_id){
