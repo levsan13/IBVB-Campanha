@@ -17,7 +17,7 @@ exit;
 
 
 require_once 'db.php';
-$mp_token = "SEU_TOKEN_MERCADO_LIVRE";
+$mp_token = "SEU_TOKEN_MERCADO_PAGO";
 $txid = 'doacao-'.time().'-'.bin2hex(random_bytes(4));
 
 
